@@ -1,6 +1,8 @@
 # midivive
 WIP midi file player for Vive Controllers' haptic actuators.
 
+(fork note: this is the first time i've messed with cs ever; i wanted to build a version that supported multiple controllers on one system, but it didn't instantly work, so i decided to install vs and figure this out)
+
 # Requirements
 
 * Vive Controllers **with the latest firmware** (factory one doesn't allow fine control over frequency of haptic pulses)
