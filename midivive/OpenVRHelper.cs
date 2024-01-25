@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -69,23 +70,50 @@ namespace MidiVive
             initialized = true;
             return true;
         }
-        private static List<ulong> DeviceHandles = new List<ulong>();
+
+        public class Device
+        {
+            public ulong handle { get; set; }
+            public string path { get; set; }
+            public int index { get; set; }
+            public Device(ulong handle, string path, int index)
+            {
+                this.handle = handle;
+                this.path = path;
+                this.index = index;
+            }
+        }
+
+        public static List<Device> DeviceHandles = new List<Device>();
 
         private static ulong vibrationHandle = 0;
 
-        public static void PlayNote(int controller, float duration, float frequency, float volume)
+        public static void PlayNote(Device controller, float duration, float frequency, float volume)
         {
             if (!initialized)
+            {
+                Console.WriteLine("PlayNote: OpenVR not initialized");
                 return;
-            if (controller > DeviceCount() - 1)
+            }
+
+            if (controller.index > DeviceCount() - 1)
+            {
+                Console.WriteLine("PlayNote: device {0} not found", controller);
                 return;
-            //Console.WriteLine("PlayNote: action {0}, restrict {1}", vibrationHandle, DeviceHandles[controller]);
-            EVRInputError err = OpenVR.Input.TriggerHapticVibrationAction(vibrationHandle, 0, duration, frequency, volume, DeviceHandles[controller]);
+            }
+
+            Console.WriteLine("PlayNote: device {0}/{1} (at path {2})", controller.index, DeviceCount() - 1, controller.path);
+            EVRInputError err = OpenVR.Input.TriggerHapticVibrationAction(vibrationHandle, 0, duration, frequency, volume, controller.handle);
             Refresh(null);
+
             if (err != EVRInputError.None)
             {
                 Console.WriteLine("OpenVR output error: {0}", err);
                 return;
+            }
+            else
+            {
+                Console.WriteLine("OpenVR output success: {0}", err);
             }
         }
 
@@ -148,7 +176,10 @@ namespace MidiVive
                     Console.WriteLine("OpenVR GetInputSourceHandle error: {0}", err);
                     return false;
                 }
-                DeviceHandles.Add(handle);
+                //create device class instance
+                Device controller = new Device(handle, path, DeviceHandles.Count);
+                DeviceHandles.Add(controller);
+                Console.WriteLine("Added device \"{0}\" with handle {1} at index {2} (loop {3})", path, handle, controller.index, i);
             }
             return true;
         }

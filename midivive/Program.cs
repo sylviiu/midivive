@@ -94,7 +94,7 @@ namespace MidiVive
             Player[] players = new Player[OpenVRHelper.DeviceCount()];
             for (int i = 0; i < players.Count(); i++)
             {
-                players[i] = new Player(i, settings.Tolerance, settings.Debug);
+                players[i] = new Player(OpenVRHelper.DeviceHandles[i], settings.Tolerance, settings.Debug);
             }
             
             //these will bet set correctly before any notes are played
@@ -140,14 +140,16 @@ namespace MidiVive
                                 for (int i = 0; i < players.Count(); i++)
                                 {
                                     if (players[i].IsBusy())
-                                    { 
+                                    {
+                                        Console.WriteLine("{0}/{1} busy", i, players.Count() - 1);
+
                                         if (i == players.Count() - 1)
                                         {
-                                            Console.WriteLine("Note {0} can't be played because both controllers are busy. Consider changing this part of the song or increasing tolerance time (-t).", note.NoteName);
+                                            Console.WriteLine("{0}/{1} busy. Skipping note.", i, players.Count() - 1);
                                         }
+
                                         continue;
                                     }
-                                    Console.WriteLine("Controller {0}: note {1} ({2:0.##} Hz) for {3:0.##} ms", i, note.NoteName, frequency, duration);
                                     players[i].Play(duration, frequency, settings.Volume);
                                     break;
                                 }
@@ -244,11 +246,12 @@ namespace MidiVive
             private readonly float tolerance;
             private readonly bool debugMode;
 
-            public Player(int controller, float tolerance, bool debugMode)
+            public Player(OpenVRHelper.Device controller, float tolerance, bool debugMode)
             {
-                this.controller = controller;
+                this.controller = Convert.ToInt32(controller.index);
                 this.tolerance = tolerance;
                 this.debugMode = debugMode;
+                Console.WriteLine("Player: {0} (at {1})", this.controller, controller.path);
             }
 
             private long GetUnixTime()
@@ -271,7 +274,9 @@ namespace MidiVive
                 }
                 else
                 {
-                    OpenVRHelper.PlayNote(controller, (float)durationMS / 1000F, (float)frequency, volume);
+                    OpenVRHelper.Device device = OpenVRHelper.DeviceHandles[controller];
+                    Console.WriteLine("[{0}] Playing note for controller at ({1:0.##} Hz) for {2:0.##} ", device.index, frequency, durationMS);
+                    OpenVRHelper.PlayNote(OpenVRHelper.DeviceHandles[controller], (float)durationMS / 1000F, (float)frequency, volume);
                 }
             }
         }
