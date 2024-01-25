@@ -111,10 +111,6 @@ namespace MidiVive
                 Console.WriteLine("OpenVR output error: {0}", err);
                 return;
             }
-            else
-            {
-                Console.WriteLine("OpenVR output success: {0}", err);
-            }
         }
 
         public static int DeviceCount()
